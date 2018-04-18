@@ -1,7 +1,7 @@
 <?php
-declare( strict_types = 1 );
+declare(strict_types = 1);
 
-// Checked for PSR2 compliance 17/4/18.
+// Checked for PSR2 compliance 18/4/18.
 
 namespace kdaviesnz\CPGI;
 
@@ -23,11 +23,6 @@ class CPGI implements ICPGI
     private $processor;
 
     /**
-     * @var string The name of the payment processor.
-     */
-    private $processorName = "";
-
-    /**
      * @var string The access token to use.
      */
     private $accessToken = "";
@@ -43,32 +38,21 @@ class CPGI implements ICPGI
      * @param String $email
      * @param String $password
      */
-    public function __construct(String $processor, String $accessToken, String $email, String $password)
+    public function __construct(String $processorName, String $accessToken, String $email, String $password)
     {
         // square, escrow, stripe
-        switch (strtolower($processor)) {
+        switch (strtolower($processorName)) {
             case "square":
-                $this->processor = new Square($accessToken);
-                $this->processorName = "square";
+                $this->processor = new SquarePaymentGatewayAdapter(new Square($accessToken));
                 break;
             case "escrow":
-                $this->processor = new Escrow($password, $email);
-                $this->processorName = "escrow";
+                $this->processor = new EscrowPaymentGatewayAdapter(new Escrow($password, $email));
                 break;
             case "stripe":
-                $this->processor = new Stripe();
+                $this->processor = new StripePaymentGatewayAdapter(new Stripe());
                 break;
         }
         $this->accessToken = $accessToken;
-    }
-
-    /**
-     * Get the processor name.
-     * @return string
-     */
-    public function getProcessorName(): string
-    {
-        return $this->processorName;
     }
 
     /**
@@ -85,14 +69,6 @@ class CPGI implements ICPGI
      */
     public function __invoke()
     {
-        $paymentGateway = null;
-        switch ($this->processorName) {
-            case "square":
-                $paymentGateway = new Square($this->accessToken);
-                break;
-            default:
-                $paymentGateway = $this;
-        }
-        return $paymentGateway;
+        return $this->processor;
     }
 }

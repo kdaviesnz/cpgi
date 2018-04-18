@@ -59,7 +59,7 @@ class Money implements IMoney
         $money = null;
         switch ($this->processor->getProcessorName()) {
             case "square":
-                $money = new \kdaviesnz\square\Money(20.00, "USD");
+                $money = new SquareMoneyAdapter(new \kdaviesnz\square\Money($this->amount, $this->currency));
                 break;
             default:
                 $money = $this;

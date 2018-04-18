@@ -61,7 +61,7 @@ class Cart implements ICart
     }
 
     /**
-     * @param IItem $item
+     * @param $item
      */
     public function addItem(IItem $item)
     {

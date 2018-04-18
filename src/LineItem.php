@@ -1,7 +1,7 @@
 <?php
 declare( strict_types=1 );
 
-// Checked for PSR2 compliance 17/4/18.
+// Checked for PSR2 compliance 18/4/18.
 
 namespace kdaviesnz\CPGI;
 
@@ -40,9 +40,19 @@ class LineItem implements ILineItem
     private $category = "";
 
     /**
-     * @var ICPGI Payment processor object.
+     * @var  Payment processor object.
      */
     private $processor;
+
+	/**
+	 * @var array taxes
+	 */
+	private $taxes = array();
+
+	/**
+	 * @var array discounts
+	 */
+	private $discounts = array();
 
     /**
      * @var string Item description.
@@ -61,13 +71,15 @@ class LineItem implements ILineItem
      * @param string $category
      */
     public function __construct(
-        ICPGI $processor,
+        $processor,
         string $name,
         string $description,
         float $price,
         string $currency,
         int $quantity,
-        string $category
+        string $category,
+        array $taxes,
+        array $discounts
     ) {
         $this->processor = $processor;
         $this->name     = $name;
@@ -76,6 +88,8 @@ class LineItem implements ILineItem
         $this->quantity = $quantity;
         $this->category = $category;
         $this->description = $description;
+        $this->taxes = $taxes;
+        $this->discounts = $discounts;
     }
 
     /**
@@ -97,24 +111,32 @@ class LineItem implements ILineItem
         $lineItem = null;
         switch ($this->processor->getProcessorName()) {
             case "square":
-                $lineItem = new OrderRequestLineItem();
-                $lineItem->setBasePriceMoney(new \kdaviesnz\square\Money($this->price, $this->currency));
-                $lineItem->setCatalogObjectId($this->category);
-                $lineItem->setName($this->name);
-                $lineItem->setQuantity($this->quantity);
+                $lineItem = new SquareLineItemAdapter(
+                    new OrderRequestLineItem(),
+                    $this->price,
+                    $this->currency,
+                    $this->category,
+                    $this->name,
+                    $this->quantity,
+                    $this->taxes
+                );
                 break;
             case "escrow":
-                $lineItem = new Item(
+                // @todo we should be able to get name, quantity etc from the Item object.
+                $item = new Item(
                     $this->description,
                     $this->price,
                     0,
                     $this->category,
                     $this->quantity,
-                    $this->name
+                    $this->name,
+                    $this->taxes,
+                    $this->discounts
+                );
+                $lineItem = new EscrowLineItemAdapter(
+                    $item
                 );
                 break;
-            default:
-                $lineItem = $this;
         }
         return $lineItem;
     }

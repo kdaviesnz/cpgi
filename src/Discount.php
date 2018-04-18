@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-// Checked for PSR2 compliance 17/4/18.
+// Checked for PSR2 compliance 18/4/18.
 
 namespace kdaviesnz\CPGI;
 
@@ -42,7 +42,7 @@ class Discount implements IDiscount
      * @param float $perc
      * @param String $currency
      */
-    public function __construct(ICPGI $processor, float $amount, float $perc, String $currency)
+    public function __construct($processor, float $amount, float $perc, String $currency)
     {
         $this->processor = $processor;
         $this->amount     = $amount;

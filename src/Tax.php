@@ -1,7 +1,7 @@
 <?php
 declare( strict_types = 1 );
 
-// Checked for PSR2 compliance 17/4/18.
+// Checked for PSR2 compliance 18/4/18.
 
 namespace kdaviesnz\CPGI;
 
@@ -29,7 +29,7 @@ class Tax implements ITax
      * @param ICPGI $processor
      * @param float $perc
      */
-    public function __construct(ICPGI $processor, float $perc)
+    public function __construct($processor, float $perc)
     {
         $this->processor = $processor;
         $this->perc     = $perc;
@@ -54,11 +54,11 @@ class Tax implements ITax
         $tax = null;
         switch ($this->processor->getProcessorName()) {
             case "square":
-                $tax = new OrderRequestTax();
-                $tax->setPercentage($this->perc);
+                $tax = new SquareTaxAdapter(new OrderRequestTax());
                 break;
-            default:
-                $tax = $this;
+        }
+        if (!is_null($tax)) {
+            $tax->setPercentage($this->perc);
         }
         return $tax;
     }

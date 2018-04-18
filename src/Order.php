@@ -77,7 +77,7 @@ class Order implements IOrder
     /**
      * Order constructor.
      *
-     * @param ICPGI $processor
+     * @param IPaymentGatewayAdapter $processor
      * @param String $reference
      * @param String $currency
      * @param String $buyerEmail
@@ -89,7 +89,7 @@ class Order implements IOrder
      * @param array $discounts
      */
     public function __construct(
-    	ICPGI $processor,
+    	IPaymentGatewayAdapter $processor,
 	    String $reference,
 	    String $currency,
 	    String $buyerEmail,
@@ -114,7 +114,7 @@ class Order implements IOrder
 
         switch ($this->processor->getProcessorName()) {
             case "square":
-                $result = $processor()->getLocations();
+                $result = $this->processor->getPaymentGateway()->getLocations();
                 $this->locationId = $result->locations[0]->id;
                 break;
             default:
@@ -139,26 +139,26 @@ class Order implements IOrder
         $order = null;
         switch ($this->processor->getProcessorName()) {
             case "square":
-                $p = $this->processor;
-                $square = $p();
-                $order = $square->createOrder(
-                    $this->locationId,
-                    $this->idempotencyKey,
-                    $this->reference,
-                    $this->lineItems,
-                    $this->taxes,
-                    $this->discounts
-                );
+            	$order = new SquareOrderAdapter(
+            		$this->processor->getPaymentGateway(),
+		            $this->locationId,
+		            $this->idempotencyKey,
+		            $this->reference,
+		            $this->lineItems,
+		            $this->taxes,
+		            $this->discounts
+	            );
                 break;
             case "escrow":
-                $order = new Cart($this->currency, $this->buyerEmail, $this->sellerEmail, $this->description);
-                //  Escrow.Cart::public function addItem(IItem $item)
-                foreach ($this->lineItems as $lineItem) {
-                    $order->addItem($lineItem);
-                }
-                $p = $this->processor;
-                $escrow = $p();
-                $escrow->createTransaction($order, $this->uri);
+            	$order = new EscrowOrderAdapter(
+            		$this->processor->getPaymentGateway(),
+		            $this->currency,
+		            $this->buyerEmail,
+		            $this->sellerEmail,
+		            $this->description,
+		            $this->lineItems,
+		            $this->uri
+	            );
                 break;
             default:
                 $order = $this;
